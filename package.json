@@ -1,0 +1,7 @@
+{
+  "name": "proxyflow-v3",
+  "version": "3.0.0",
+  "description": "Simple working web proxy — deploy on Vercel",
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}

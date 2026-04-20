@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ProxyFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060608;--s1:#0f0f14;--s2:#18181f;--border:#25252e;
+  --acc:#6d28d9;--acc2:#0ea5e9;--green:#10b981;--red:#ef4444;
+  --text:#f1f5f9;--muted:#64748b;--light:#94a3b8;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ── Nav ── */
+nav{
+  background:var(--s1);
+  border-bottom:1px solid var(--border);
+  padding:8px 12px;
+  display:flex;align-items:center;gap:8px;
+  flex-shrink:0;z-index:50;
+}
+.logo{font-weight:700;font-size:14px;letter-spacing:-.3px;white-space:nowrap;
+  background:linear-gradient(135deg,#a78bfa,var(--acc2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.icon-btn{
+  background:var(--s2);border:1px solid var(--border);color:var(--light);
+  width:30px;height:30px;border-radius:7px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  transition:.15s;flex-shrink:0;
+}
+.icon-btn:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+.icon-btn:disabled{opacity:.3;cursor:default;pointer-events:none}
+
+.bar{
+  flex:1;display:flex;align-items:center;
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:0 10px;height:34px;gap:7px;transition:.2s;
+}
+.bar:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px rgba(109,40,217,.18)}
+.bar-icon{font-size:11px;flex-shrink:0;color:var(--green)}
+#url{
+  flex:1;background:none;border:none;color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;
+}
+#url::placeholder{color:var(--muted)}
+.go{
+  background:var(--acc);border:none;color:#fff;
+  padding:5px 13px;border-radius:6px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-weight:600;font-size:12px;
+  flex-shrink:0;transition:.15s;
+}
+.go:hover{background:#5b21b6;transform:translateY(-1px)}
+
+/* ── Home ── */
+#home{
+  flex:1;overflow-y:auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:40px 16px 24px;gap:28px;
+  background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(109,40,217,.1) 0%,transparent 70%) var(--bg);
+}
+.hero{text-align:center}
+.hero h1{font-size:clamp(32px,5vw,60px);font-weight:700;letter-spacing:-2px;line-height:1.1;
+  background:linear-gradient(135deg,#e2e8f0 0%,var(--acc2) 50%,#a78bfa 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero p{margin-top:8px;color:var(--muted);font-size:13px;font-family:'JetBrains Mono',monospace}
+
+.pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.pill{
+  background:var(--s1);border:1px solid var(--border);border-radius:20px;
+  padding:4px 12px;font-size:11px;color:var(--light);font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:5px;
+}
+.pill span{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;width:100%;max-width:680px}
+.site{
+  background:var(--s1);border:1px solid var(--border);border-radius:10px;
+  padding:11px 13px;cursor:pointer;display:flex;align-items:center;gap:9px;
+  transition:.2s;text-decoration:none;color:inherit;
+}
+.site:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 4px 16px rgba(109,40,217,.2)}
+.site .em{font-size:18px}
+.site .info .nm{font-size:12px;font-weight:600}
+.site .info .dm{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:1px}
+
+/* ── Frame ── */
+#frame-wrap{flex:1;position:relative;display:none}
+#frame{width:100%;height:100%;border:none;background:#fff}
+
+.overlay{
+  position:absolute;inset:0;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  z-index:10;
+}
+.overlay.hidden{display:none}
+.spin{width:36px;height:36px;border:2.5px solid var(--border);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-text{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+/* Error box */
+#err-box{
+  position:fixed;bottom:16px;right:16px;
+  background:var(--s1);border:1px solid var(--red);border-radius:10px;
+  padding:10px 14px;font-size:12px;font-family:'JetBrains Mono',monospace;
+  max-width:280px;z-index:999;display:none;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+}
+#err-box.show{display:block}
+#err-box strong{color:var(--red)}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">⚡ ProxyFlow</span>
+  <button class="icon-btn" id="btn-back"  onclick="navBack()"    title="Back">←</button>
+  <button class="icon-btn" id="btn-fwd"   onclick="navFwd()"     title="Forward">→</button>
+  <button class="icon-btn"                onclick="reload()"     title="Reload">↺</button>
+  <button class="icon-btn"                onclick="showHome()"   title="Home">⌂</button>
+
+  <div class="bar">
+    <span class="bar-icon">🔒</span>
+    <input id="url" placeholder="Type any URL: pornhub.com, reddit.com, youtube.com ..." 
+           onkeydown="if(event.key==='Enter')go()">
+    <button class="go" onclick="go()">Go</button>
+  </div>
+</nav>
+
+<!-- Home Page -->
+<div id="home">
+  <div class="hero">
+    <h1>Browse Anything</h1>
+    <p>// Vercel US servers — Pakistan restrictions bypass</p>
+  </div>
+
+  <div class="pills">
+    <div class="pill"><span></span> Vercel US Exit Node</div>
+    <div class="pill"><span></span> HLS Video Support</div>
+    <div class="pill"><span></span> No Proxy Required</div>
+  </div>
+
+  <div class="sites">
+    <div class="site" onclick="nav('https://www.pornhub.com')">
+      <span class="em">🔞</span>
+      <div class="info"><div class="nm">Pornhub</div><div class="dm">pornhub.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.xvideos.com')">
+      <span class="em">🎬</span>
+      <div class="info"><div class="nm">XVideos</div><div class="dm">xvideos.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.xnxx.com')">
+      <span class="em">🎭</span>
+      <div class="info"><div class="nm">XNXX</div><div class="dm">xnxx.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.xhamster.com')">
+      <span class="em">🐹</span>
+      <div class="info"><div class="nm">xHamster</div><div class="dm">xhamster.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.redtube.com')">
+      <span class="em">🔴</span>
+      <div class="info"><div class="nm">RedTube</div><div class="dm">redtube.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.youporn.com')">
+      <span class="em">🎥</span>
+      <div class="info"><div class="nm">YouPorn</div><div class="dm">youporn.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.reddit.com')">
+      <span class="em">💬</span>
+      <div class="info"><div class="nm">Reddit</div><div class="dm">reddit.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.twitter.com')">
+      <span class="em">🐦</span>
+      <div class="info"><div class="nm">Twitter / X</div><div class="dm">twitter.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.instagram.com')">
+      <span class="em">📸</span>
+      <div class="info"><div class="nm">Instagram</div><div class="dm">instagram.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.tiktok.com')">
+      <span class="em">🎵</span>
+      <div class="info"><div class="nm">TikTok</div><div class="dm">tiktok.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.onlyfans.com')">
+      <span class="em">⭐</span>
+      <div class="info"><div class="nm">OnlyFans</div><div class="dm">onlyfans.com</div></div>
+    </div>
+    <div class="site" onclick="nav('https://www.youtube.com')">
+      <span class="em">📺</span>
+      <div class="info"><div class="nm">YouTube</div><div class="dm">youtube.com</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Browser iframe -->
+<div id="frame-wrap">
+  <div class="overlay" id="overlay">
+    <div class="spin"></div>
+    <div class="ld-text" id="ld-text">Loading...</div>
+  </div>
+  <iframe id="frame"
+    sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation allow-modals"
+    referrerpolicy="no-referrer">
+  </iframe>
+</div>
+
+<div id="err-box"></div>
+
+<script>
+const $url = document.getElementById('url');
+const $home = document.getElementById('home');
+const $fw = document.getElementById('frame-wrap');
+const $frame = document.getElementById('frame');
+const $overlay = document.getElementById('overlay');
+const $ldText = document.getElementById('ld-text');
+const $err = document.getElementById('err-box');
+const $btnBack = document.getElementById('btn-back');
+const $btnFwd  = document.getElementById('btn-fwd');
+
+let hist = [], hi = -1, cur = '';
+
+function proxyUrl(raw){
+  if(!raw) return '';
+  raw = raw.trim();
+  if(!/^https?:\/\//i.test(raw)){
+    if(raw.includes(' ') || !raw.includes('.'))
+      raw = 'https://www.google.com/search?q=' + encodeURIComponent(raw);
+    else raw = 'https://' + raw;
+  }
+  return '/api/proxy?url=' + encodeURIComponent(raw);
+}
+
+function nav(raw){
+  if(!raw) return;
+  cur = raw;
+  $url.value = raw;
+  $home.style.display = 'none';
+  $fw.style.display = 'flex';
+  $fw.style.flexDirection = 'column';
+  $overlay.classList.remove('hidden');
+  $ldText.textContent = 'Connecting via Vercel US...';
+
+  hist = hist.slice(0, hi+1);
+  hist.push(raw);
+  hi = hist.length - 1;
+  updNav();
+
+  $frame.src = proxyUrl(raw);
+
+  // Auto-hide overlay after timeout
+  const t = setTimeout(() => $overlay.classList.add('hidden'), 10000);
+  $frame.onload = () => { clearTimeout(t); $overlay.classList.add('hidden'); };
+}
+
+function go(){ nav($url.value.trim()); }
+function navBack(){ if(hi>0){ hi--; cur=hist[hi]; $url.value=cur; $frame.src=proxyUrl(cur); updNav(); } }
+function navFwd(){ if(hi<hist.length-1){ hi++; cur=hist[hi]; $url.value=cur; $frame.src=proxyUrl(cur); updNav(); } }
+function reload(){ if(cur){ $frame.src=proxyUrl(cur); $overlay.classList.remove('hidden'); } }
+function showHome(){ $home.style.display=''; $fw.style.display='none'; $url.value=''; cur=''; }
+function updNav(){ $btnBack.disabled=hi<=0; $btnFwd.disabled=hi>=hist.length-1; }
+updNav();
+</script>
+</body>
+</html>
